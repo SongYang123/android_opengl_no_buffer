@@ -6,6 +6,7 @@ import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.SystemClock;
 
+import com.ysong.opengl_no_buffer.Object3D.Cylinder;
 import com.ysong.opengl_no_buffer.Object3D.Object3D;
 import com.ysong.opengl_no_buffer.Object3D.Prism;
 
@@ -27,6 +28,7 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 	private float[] mMVMatrix = new float[16];
 
 	private Prism mPrism;
+	private Cylinder mCylinder;
 
 	public MyGLRender(Context context) {
 		this.context = context;
@@ -60,7 +62,8 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 		int mLightPosHandle = GLES20.glGetUniformLocation(programHandle, "uLightPos");
 		GLES20.glUniform3fv(mLightPosHandle, 1, lightPos, 0);
 		Object3D.init(programHandle);
-		mPrism = new Prism(50, 0.5f, 1.0f, color);
+		mPrism = new Prism(8, 0.5f, 1.0f, color);
+		mCylinder = new Cylinder(32, 0.25f, 2.0f, color);
 	}
 
 	@Override
@@ -74,6 +77,7 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 		Matrix.multiplyMM(mMVMatrix, 0, mViewMatrix, 0, mModelMatrix, 0);
 		Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVMatrix, 0);
 		mPrism.render(mMVPMatrix, mMVMatrix);
+		mCylinder.render(mMVPMatrix, mMVMatrix);
 	}
 
 	@Override
@@ -85,6 +89,7 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 
 	public void release() {
 		mPrism.release();
+		mCylinder.release();
 	}
 
 	private String loadShader(int resourceId) {
