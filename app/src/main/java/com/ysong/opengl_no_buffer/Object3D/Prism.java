@@ -9,81 +9,129 @@ import java.nio.ShortBuffer;
 
 public class Prism extends Object3D {
 
-	private FloatBuffer vertexBuffer;
-	private ShortBuffer indexBuffer;
+	private FloatBuffer[] vertexBuffer = new FloatBuffer[3];
+	private ShortBuffer[] indexBuffer = new ShortBuffer[3];
 	private int n;
 
 	public Prism(int n, float radius, float height, float[] color) {
-		this.n = n;
-
-		float[] vertex = getVertex(n, radius, height);
-		vertexBuffer = ByteBuffer.allocateDirect(BYTE_PER_FLOAT * vertex.length).order(ByteOrder.nativeOrder()).asFloatBuffer();
-		vertexBuffer.put(vertex).position(0);
-
-		short[] index = getIndex(n);
-		indexBuffer = ByteBuffer.allocateDirect(BYTE_PER_SHORT * index.length).order(ByteOrder.nativeOrder()).asShortBuffer();
-		indexBuffer.put(index).position(0);
-
+		float[][] vertex = genVertex(n, radius, height);
+		short[][] index = genIndex(n);
+		for (int i = 0; i < 3; i++) {
+			vertexBuffer[i] = ByteBuffer.allocateDirect(BYTE_PER_FLOAT * vertex[i].length).order(ByteOrder.nativeOrder()).asFloatBuffer();
+			vertexBuffer[i].put(vertex[i]);
+			indexBuffer[i] = ByteBuffer.allocateDirect(BYTE_PER_SHORT * index[i].length).order(ByteOrder.nativeOrder()).asShortBuffer();
+			indexBuffer[i].put(index[i]);
+		}
 		GLES20.glUniform4fv(mColorHandle, 1, color, 0);
+		this.n = n;
 	}
 
 	@Override
-	public void render(float[] mMVPMatrix) {
+	public void render(float[] mMVPMatrix, float[] mMVMatrix) {
 		GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mMVPMatrix, 0);
+		GLES20.glUniformMatrix4fv(mMVMatrixHandle, 1, false, mMVMatrix, 0);
 
-		GLES20.glVertexAttribPointer(mPositionHandle, COORD_PER_VERTEX, GLES20.GL_FLOAT, false, BYTE_PER_FLOAT * COORD_PER_VERTEX, vertexBuffer);
 		GLES20.glEnableVertexAttribArray(mPositionHandle);
-
-		indexBuffer.position(0);
-		GLES20.glDrawElements(GLES20.GL_TRIANGLE_FAN, n + 2, GLES20.GL_UNSIGNED_SHORT, indexBuffer);
-		indexBuffer.position(n + 2);
-		GLES20.glDrawElements(GLES20.GL_TRIANGLE_FAN, n + 2, GLES20.GL_UNSIGNED_SHORT, indexBuffer);
-		indexBuffer.position(n * 2 + 4);
-		GLES20.glDrawElements(GLES20.GL_TRIANGLE_STRIP, n * 2 + 2, GLES20.GL_UNSIGNED_SHORT, indexBuffer);
+		GLES20.glEnableVertexAttribArray(mNormalHandle);
+		for (int i = 0; i < 2; i++) {
+			vertexBuffer[i].position(0);
+			GLES20.glVertexAttribPointer(mPositionHandle, POSITION_SIZE, GLES20.GL_FLOAT, false, BYTE_PER_FLOAT * (POSITION_SIZE + NORMAL_SIZE), vertexBuffer[i]);
+			vertexBuffer[i].position(POSITION_SIZE);
+			GLES20.glVertexAttribPointer(mNormalHandle, NORMAL_SIZE, GLES20.GL_FLOAT, false, BYTE_PER_FLOAT * (POSITION_SIZE + NORMAL_SIZE), vertexBuffer[i]);
+			indexBuffer[i].position(0);
+			GLES20.glDrawElements(GLES20.GL_TRIANGLE_FAN, indexBuffer[i].capacity(), GLES20.GL_UNSIGNED_SHORT, indexBuffer[i]);
+		}
+		vertexBuffer[2].position(0);
+		GLES20.glVertexAttribPointer(mPositionHandle, POSITION_SIZE, GLES20.GL_FLOAT, false, BYTE_PER_FLOAT * (POSITION_SIZE + NORMAL_SIZE), vertexBuffer[2]);
+		vertexBuffer[2].position(POSITION_SIZE);
+		GLES20.glVertexAttribPointer(mNormalHandle, NORMAL_SIZE, GLES20.GL_FLOAT, false, BYTE_PER_FLOAT * (POSITION_SIZE + NORMAL_SIZE), vertexBuffer[2]);
+		for (int i = 0; i < n; i++) {
+			indexBuffer[2].position(i * 4);
+			GLES20.glDrawElements(GLES20.GL_TRIANGLE_STRIP, 4, GLES20.GL_UNSIGNED_SHORT, indexBuffer[2]);
+		}
 	}
 
-	private float[] getVertex(int n, float radius, float height) {
-		float[] vertex = new float[n * 6 + 6];
-		for (int i = 0; i < n * 2; i++) {
-			double angle = Math.PI * 2 * i / n;
-			vertex[i * 3] = radius * ((float) Math.cos(angle));
-			vertex[i * 3 + 1] = radius * ((float) Math.sin(angle));
-			if (i < n) {
-				vertex[i * 3 + 2] = height / 2;
-			} else {
-				vertex[i * 3 + 2] = -height / 2;
-			}
+	@Override
+	public void release() {
+		for (int i = 0; i < 3; i++) {
+			vertexBuffer[i].limit(0);
+			vertexBuffer[i] = null;
+			indexBuffer[i].limit(0);
+			indexBuffer[i] = null;
 		}
-		vertex[n * 6] = 0.0f;
-		vertex[n * 6 + 1] = 0.0f;
-		vertex[n * 6 + 2] = height / 2;
-		vertex[n * 6 + 3] = 0.0f;
-		vertex[n * 6 + 4] = 0.0f;
-		vertex[n * 6 + 5] = -height / 2;
+	}
+
+	private float[][] genVertex(int n, float radius, float height) {
+		float[][] vertex = new float[3][];
+		vertex[0] = new float[n * 6 + 6];
+		vertex[1] = new float[n * 6 + 6];
+		vertex[2] = new float[n * 24];
+		height /= 2;
+		/* top and bottom */
+		for (int i = 0; i < n; i++) {
+			double angle = Math.PI * 2 * i / n;
+			float x = radius * ((float) Math.cos(angle));
+			float y = radius * ((float) Math.sin(angle));
+			int i6 = i * 6;
+			vertex[0][i6] = vertex[1][i6] = x;
+			vertex[0][i6 + 1] = y;
+			vertex[1][i6 + 1] = -y;
+
+		}
+		for (int i = 0; i < n + 1; i++) {
+			int i6 = i * 6;
+			vertex[0][i6 + 2] = height;
+			vertex[0][i6 + 5] = 1.0f;
+			vertex[1][i6 + 2] = -height;
+			vertex[1][i6 + 5] = -1.0f;
+		}
+		/* side */
+		for (int i = 0; i < n; i++) {
+			double angle = Math.PI * 2 * i / n;
+			float x = radius * ((float) Math.cos(angle));
+			float y = radius * ((float) Math.sin(angle));
+			int prevTopR6 = ((i * 2 + n * 2 - 1) % (n * 2)) * 6;
+			int curTopL6 = i * 2 * 6;
+			int prevBtmR6 = prevTopR6 + n * 2 * 6;
+			int curBtmL6 = curTopL6 + n * 2 * 6;
+			vertex[2][prevTopR6] = vertex[2][curTopL6] = vertex[2][prevBtmR6] = vertex[2][curBtmL6] = x;
+			vertex[2][prevTopR6 + 1] = vertex[2][curTopL6 + 1] = vertex[2][prevBtmR6 + 1] = vertex[2][curBtmL6 + 1] = y;
+			vertex[2][prevTopR6 + 2] = vertex[2][curTopL6 + 2] = height;
+			vertex[2][prevBtmR6 + 2] = vertex[2][curBtmL6 + 2] = -height;
+
+		}
+		for (int i = 0; i < n; i++) {
+			double angle = Math.PI / n * (2 * i + 1);
+			float x = (float) Math.cos(angle);
+			float y = (float) Math.sin(angle);
+			int topL6 = i * 2 * 6;
+			int topR6 = (i * 2 + 1) * 6;
+			int btmL6 = topL6 + n * 2 * 6;
+			int btmR6 = topR6 + n * 2 * 6;
+			vertex[2][topL6 + 3] = vertex[2][topR6 + 3] = vertex[2][btmL6 + 3] = vertex[2][btmR6 + 3] = x;
+			vertex[2][topL6 + 4] = vertex[2][topR6 + 4] = vertex[2][btmL6 + 4] = vertex[2][btmR6 + 4] = y;
+		}
 		return vertex;
 	}
 
-	private short[] getIndex(int n) {
-		short[] index = new short[n * 4 + 6];
-		// top
-		index[0] = (short) (n * 2);
-		for (int i = 0; i < n; i++) {
-			index[i + 1] = (short) i;
+	private short[][] genIndex(int n) {
+		short[][] index = new short[3][];
+		index[0] = new short[n + 2];
+		index[1] = new short[n + 2];
+		index[2] = new short[n * 4];
+		/* top and bottom */
+		for (int i = 0; i < n + 1; i++) {
+			short idx = (short) ((i + n) % (n + 1));
+			index[0][i] = index[1][i] = idx;
 		}
-		index[n + 1] = 0;
-		// bottom
-		index[n + 2] = (short) (n * 2 + 1);
-		for (int i = 0; i < n; i++) {
-			index[n + 3 + i] = (short) (n * 2 - 1 - i);
+		/* side */
+		for (int i = 0;i < n; i++) {
+			int i4 = i * 4;
+			index[2][i4] = (short) (i * 2);
+			index[2][i4 + 1] = (short) (i * 2 + n * 2);
+			index[2][i4 + 2] = (short) (i * 2 + 1);
+			index[2][i4 + 3] = (short) (i * 2 + n * 2 + 1);
 		}
-		index[n * 2 + 3] = (short) (n * 2 - 1);
-		// side
-		for (int i = 0; i < n; i++) {
-			index[n * 2 + 4 + i * 2] = (short) i;
-			index[n * 2 + 4 + i * 2 + 1] = (short) (n + i);
-		}
-		index[n * 4 + 4] = 0;
-		index[n * 4 + 5] = (short) n;
 		return index;
 	}
 }

@@ -7,13 +7,15 @@ import android.os.Bundle;
 public class MainActivity extends AppCompatActivity {
 
 	private GLSurfaceView mGLSurfaceView;
+	private MyGLRender mGLRender;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		mGLSurfaceView = new GLSurfaceView(this);
 		mGLSurfaceView.setEGLContextClientVersion(2);
-		mGLSurfaceView.setRenderer(new MyGLRender());
+		mGLRender = new MyGLRender(this);
+		mGLSurfaceView.setRenderer(mGLRender);
 		setContentView(mGLSurfaceView);
 	}
 
@@ -27,5 +29,11 @@ public class MainActivity extends AppCompatActivity {
 	protected void onPause() {
 		super.onPause();
 		mGLSurfaceView.onPause();
+	}
+
+	@Override
+	protected void onDestroy() {
+		mGLRender.release();
+		super.onDestroy();
 	}
 }
