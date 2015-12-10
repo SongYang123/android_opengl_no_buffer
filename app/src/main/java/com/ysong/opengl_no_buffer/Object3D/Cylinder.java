@@ -11,19 +11,21 @@ public class Cylinder extends Object3D {
 
 	private FloatBuffer[] vertexBuffer = new FloatBuffer[3];
 	private ShortBuffer[] indexBuffer = new ShortBuffer[3];
-	private int n;
 
 	public Cylinder(int n, float radius, float height, float[] color) {
 		float[][] vertex = genVertex(n, radius, height);
-		short[][] index = genIndex(n);
 		for (int i = 0; i < 3; i++) {
 			vertexBuffer[i] = ByteBuffer.allocateDirect(BYTE_PER_FLOAT * vertex[i].length).order(ByteOrder.nativeOrder()).asFloatBuffer();
 			vertexBuffer[i].put(vertex[i]);
+		}
+
+		short[][] index = genIndex(n);
+		for (int i = 0; i < 3; i++) {
 			indexBuffer[i] = ByteBuffer.allocateDirect(BYTE_PER_SHORT * index[i].length).order(ByteOrder.nativeOrder()).asShortBuffer();
 			indexBuffer[i].put(index[i]);
 		}
+
 		GLES20.glUniform4fv(mColorHandle, 1, color, 0);
-		this.n = n;
 	}
 
 	@Override
@@ -33,6 +35,7 @@ public class Cylinder extends Object3D {
 
 		GLES20.glEnableVertexAttribArray(mPositionHandle);
 		GLES20.glEnableVertexAttribArray(mNormalHandle);
+
 		for (int i = 0; i < 2; i++) {
 			vertexBuffer[i].position(0);
 			GLES20.glVertexAttribPointer(mPositionHandle, POSITION_SIZE, GLES20.GL_FLOAT, false, BYTE_PER_FLOAT * (POSITION_SIZE + NORMAL_SIZE), vertexBuffer[i]);
@@ -41,6 +44,7 @@ public class Cylinder extends Object3D {
 			indexBuffer[i].position(0);
 			GLES20.glDrawElements(GLES20.GL_TRIANGLE_FAN, indexBuffer[i].capacity(), GLES20.GL_UNSIGNED_SHORT, indexBuffer[i]);
 		}
+
 		vertexBuffer[2].position(0);
 		GLES20.glVertexAttribPointer(mPositionHandle, POSITION_SIZE, GLES20.GL_FLOAT, false, BYTE_PER_FLOAT * (POSITION_SIZE + NORMAL_SIZE), vertexBuffer[2]);
 		vertexBuffer[2].position(POSITION_SIZE);
@@ -68,8 +72,8 @@ public class Cylinder extends Object3D {
 		/* top and bottom */
 		for (int i = 0; i < n; i++) {
 			double angle = Math.PI * 2 * i / n;
-			float x = radius * ((float) Math.cos(angle));
-			float y = radius * ((float) Math.sin(angle));
+			float x = radius * (float) Math.cos(angle);
+			float y = radius * (float) Math.sin(angle);
 			int i6 = i * 6;
 			vertex[0][i6] = vertex[1][i6] = x;
 			vertex[0][i6 + 1] = y;

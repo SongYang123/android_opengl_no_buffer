@@ -9,6 +9,7 @@ import android.os.SystemClock;
 import com.ysong.opengl_no_buffer.Object3D.Cylinder;
 import com.ysong.opengl_no_buffer.Object3D.Object3D;
 import com.ysong.opengl_no_buffer.Object3D.Prism;
+import com.ysong.opengl_no_buffer.Object3D.Sphere;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
@@ -21,6 +22,9 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 
 	private Context context;
 
+	private static final float[] lightPos = {6.0f, 6.0f, 0.0f};
+	private static final float[] color = {1.0f, 0.0f, 1.0f, 1.0f};
+
 	private float[] mModelMatrix = new float[16];
 	private float[] mViewMatrix = new float[16];
 	private float[] mProjectionMatrix = new float[16];
@@ -29,6 +33,7 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 
 	private Prism mPrism;
 	private Cylinder mCylinder;
+	private Sphere mSphere;
 
 	public MyGLRender(Context context) {
 		this.context = context;
@@ -57,13 +62,13 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 //		GLES20.glEnable(GLES20.GL_BLEND);
 //		GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
-		float[] lightPos = {0.0f, 0.0f, 0.0f};
-		float[] color = {1.0f, 0.0f, 1.0f, 1.0f};
 		int mLightPosHandle = GLES20.glGetUniformLocation(programHandle, "uLightPos");
 		GLES20.glUniform3fv(mLightPosHandle, 1, lightPos, 0);
+
 		Object3D.init(programHandle);
-		mPrism = new Prism(8, 0.5f, 1.0f, color);
-		mCylinder = new Cylinder(32, 0.25f, 2.0f, color);
+		mPrism = new Prism(6, 0.25f, 1.5f, color);
+		mCylinder = new Cylinder(16, 0.15f, 2.0f, color);
+		mSphere = new Sphere(16, 0.5f, color);
 	}
 
 	@Override
@@ -78,6 +83,7 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 		Matrix.multiplyMM(mMVPMatrix, 0, mProjectionMatrix, 0, mMVMatrix, 0);
 		mPrism.render(mMVPMatrix, mMVMatrix);
 		mCylinder.render(mMVPMatrix, mMVMatrix);
+		mSphere.render(mMVPMatrix, mMVMatrix);
 	}
 
 	@Override
@@ -88,8 +94,9 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 	}
 
 	public void release() {
-		mPrism.release();
+		mSphere.release();
 		mCylinder.release();
+		mPrism.release();
 	}
 
 	private String loadShader(int resourceId) {
