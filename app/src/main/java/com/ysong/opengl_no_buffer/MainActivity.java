@@ -1,21 +1,16 @@
 package com.ysong.opengl_no_buffer;
 
-import android.opengl.GLSurfaceView;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 public class MainActivity extends AppCompatActivity {
 
-	private GLSurfaceView mGLSurfaceView;
-	private MyGLRender mGLRender;
+	private MyGLSurfaceView mGLSurfaceView;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mGLSurfaceView = new GLSurfaceView(this);
-		mGLSurfaceView.setEGLContextClientVersion(2);
-		mGLRender = new MyGLRender(this);
-		mGLSurfaceView.setRenderer(mGLRender);
+		mGLSurfaceView = new MyGLSurfaceView(this);
 		setContentView(mGLSurfaceView);
 	}
 
@@ -33,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
-		mGLRender.release();
+		mGLSurfaceView.release();
 		super.onDestroy();
 	}
 }
