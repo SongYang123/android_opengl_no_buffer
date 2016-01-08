@@ -2,6 +2,7 @@ package com.ysong.opengl_no_buffer;
 
 import android.content.Context;
 import android.opengl.GLSurfaceView;
+import android.util.AttributeSet;
 import android.view.MotionEvent;
 
 public class MyGLSurfaceView extends GLSurfaceView {
@@ -10,8 +11,8 @@ public class MyGLSurfaceView extends GLSurfaceView {
 	private float mPrevX;
 	private float mPrevY;
 
-	public MyGLSurfaceView(Context context) {
-		super(context);
+	public MyGLSurfaceView(Context context, AttributeSet attributeSet) {
+		super(context, attributeSet);
 		setEGLContextClientVersion(2);
 		mGLRender = new MyGLRender(context);
 		setRenderer(mGLRender);
@@ -26,15 +27,20 @@ public class MyGLSurfaceView extends GLSurfaceView {
 		float w = getWidth();
 
 		if (event.getAction() == MotionEvent.ACTION_MOVE) {
-			float ax = -(float) 180 * (y - mPrevY) / w;
-			float ay = -(float) 180 * (x - mPrevX) / w;
-			mGLRender.camMove(ax, ay);
+			float ay = -(float) 180 * (y - mPrevY) / w;
+			float az = -(float) 180 * (x - mPrevX) / w;
+			mGLRender.camMove(ay, az);
 			requestRender();
 		}
 
 		mPrevX = x;
 		mPrevY = y;
 		return true;
+	}
+
+	public void zoom(float exp) {
+		mGLRender.camZoom(exp);
+		requestRender();
 	}
 
 	public void release() {

@@ -11,6 +11,7 @@ public class Cylinder extends Object3D {
 
 	private FloatBuffer[] vertexBuffer = new FloatBuffer[3];
 	private ShortBuffer[] indexBuffer = new ShortBuffer[3];
+	private float[] color;
 
 	public Cylinder(int n, float radius, float height, float[] color) {
 		float[][] vertex = genVertex(n, radius, height);
@@ -25,11 +26,12 @@ public class Cylinder extends Object3D {
 			indexBuffer[i].put(index[i]);
 		}
 
-		GLES20.glUniform4fv(mColorHandle, 1, color, 0);
+		this.color = color;
 	}
 
 	@Override
 	public void render(float[] mMVPMatrix, float[] mMVMatrix) {
+		GLES20.glUniform4fv(mColorHandle, 1, color, 0);
 		GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mMVPMatrix, 0);
 		GLES20.glUniformMatrix4fv(mMVMatrixHandle, 1, false, mMVMatrix, 0);
 

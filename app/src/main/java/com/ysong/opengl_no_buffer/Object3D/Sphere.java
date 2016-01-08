@@ -12,6 +12,7 @@ public class Sphere extends Object3D {
 	private FloatBuffer vertexBuffer;
 	private ShortBuffer[] indexBuffer = new ShortBuffer[3];
 	private int n;
+	private float[] color;
 
 	public Sphere(int n, float radius, float[] color) {
 		float[] vertex = genVertex(n, radius);
@@ -24,12 +25,13 @@ public class Sphere extends Object3D {
 			indexBuffer[i].put(index[i]);
 		}
 
-		GLES20.glUniform4fv(mColorHandle, 1, color, 0);
 		this.n = n;
+		this.color = color;
 	}
 
 	@Override
 	public void render(float[] mMVPMatrix, float[] mMVMatrix) {
+		GLES20.glUniform4fv(mColorHandle, 1, color, 0);
 		GLES20.glUniformMatrix4fv(mMVPMatrixHandle, 1, false, mMVPMatrix, 0);
 		GLES20.glUniformMatrix4fv(mMVMatrixHandle, 1, false, mMVMatrix, 0);
 
