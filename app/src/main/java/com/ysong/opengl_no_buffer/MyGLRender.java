@@ -118,10 +118,10 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 		float[] matZ = new float[16];
 		Matrix.setRotateM(matZ, 0, az, 0.0f, 0.0f, 1.0f);
 		Matrix.multiplyMM(matCamTemp, 0, matZ, 0, matCam, 0);
-		matCopy(matCam, matCamTemp);
+		matCopy(matCamTemp, matCam);
 		Matrix.rotateM(matCam, 0, ay, 0.0f, 1.0f, 0.0f);
 		if (Math.abs(Math.atan2(matCam[2], matCam[10])) > ANGLE_Y_LIMIT) {
-			matCopy(matCam, matCamTemp);
+			matCopy(matCamTemp, matCam);
 		}
 		Matrix.setLookAtM(mViewMatrix, 0, matCam[0] * len, matCam[1] * len, matCam[2] * len, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f);
 	}
@@ -160,7 +160,7 @@ public class MyGLRender implements GLSurfaceView.Renderer {
 		return body.toString();
 	}
 
-	private void matCopy(float[] dst, float[] src) {
+	private void matCopy(float[] src, float[] dst) {
 		for (int i = 0; i < 16; i++) {
 			dst[i] = src[i];
 		}
